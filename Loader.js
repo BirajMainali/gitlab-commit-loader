@@ -4,9 +4,9 @@ const authorNameElem = __("#authorName");
 const projectIdElem = __("#projectId");
 const somethingSpecialElem = __("#somethingSpecial");
 const loadCommitsElem = __("#loadCommits");
-clearCacheElem = __("#clearCache");
+const clearCacheElem = __("#clearCache");
 
-const credentilInfos = () => {
+const initialCredential = () => {
   return {
     authorName: authorNameElem.value.trim(),
     projectId: projectIdElem.value.trim(),
@@ -14,36 +14,43 @@ const credentilInfos = () => {
   };
 };
 
-const validateCredentilInfos = () => {
-  const { authorName, projectId, somethingSpecial } = credentilInfos();
-  if (!authorName || !projectId || !somethingSpecial)
-    throw new Error("Please enter all credentil");
+const setinitialCredential = (authorName, projectId, somethingSpecial) => {
+  authorNameElem.value = authorName;
+  projectIdElem.value = projectId;
+  somethingSpecialElem.value = somethingSpecial;
+}
+
+const validateinitialCredential = () => {
+  const { authorName, projectId, somethingSpecial } = initialCredential();
+  if (!authorName || !projectId || !somethingSpecial) {
+    throw new Error("Please enter all credential");
+  }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  credentilInfos();
-});
-
-const getCacheed = () => {
-  const cachedCredentil = localStorage.getItem("bla");
-  let { authorName, projectId, somethingSpecial } = JSON.parse(cachedCredentil);
+const getCached = () => {
+  const cachedCredential = localStorage.getItem("bla");
+  let { authorName, projectId, somethingSpecial } = JSON.parse(cachedCredential);
   somethingSpecial = getAccessText(somethingSpecial);
   return { authorName, projectId, somethingSpecial };
 };
 
-const hasCacheed = () => {
-  const cachedCredentil = localStorage.getItem("bla");
-  if (cachedCredentil) return true;
+const hasCached = () => {
+  const cachedCredential = localStorage.getItem("bla");
+  if (cachedCredential) return true;
 };
 
 const setCache = () => {
-  let { authorName, projectId, somethingSpecial } = credentilInfos();
+  let { authorName, projectId, somethingSpecial } = initialCredential();
   somethingSpecial = setAccessText(somethingSpecial);
   localStorage.setItem(
     "bla",
     JSON.stringify({ authorName, projectId, somethingSpecial })
   );
 };
+
+const setAccessText = (text) => (text += getRandom());
+
+const getAccessText = (text) => text.split("___")[0];
 
 const clearCache = () => localStorage.removeItem("bla");
 
@@ -63,16 +70,16 @@ const renderCommits = (commits) => {
 
 loadCommitsElem.addEventListener("click", async () => {
   try {
-    if (hasCacheed()) {
+    if (hasCached()) {
       clearAndSetCache();
-      const { authorName, projectId, somethingSpecial } = getCacheed();
+      const { authorName, projectId, somethingSpecial } = getCached();
       const commits = await getCommits(authorName, projectId, somethingSpecial);
       renderCommits(commits);
     } else {
-      validateCredentilInfos();
-      const { authorName, projectId, somethingSpecial } = credentilInfos();
+      validateinitialCredential();
+      const { authorName, projectId, somethingSpecial } = initialCredential();
       const commits = await getCommits(authorName, projectId, somethingSpecial);
-      if (confirm("Are you sure to cahce this credentil?")) setCache();
+      if (confirm("Are you sure to cache this credential?")) setCache();
       renderCommits(commits);
     }
   } catch (err) {
@@ -82,7 +89,7 @@ loadCommitsElem.addEventListener("click", async () => {
 
 const getCommits = async (authorName, projectId, somethingSpecial) => {
   if (!authorName || !projectId || !somethingSpecial)
-    throw new Error("Please enter all credentil");
+    throw new Error("Please enter all credential");
   const res = await fetch(
     `https://gitlab.com/api/v4/projects/${projectId}/repository/commits?all=true`,
     {
@@ -92,73 +99,70 @@ const getCommits = async (authorName, projectId, somethingSpecial) => {
       },
     }
   ).then((res) => res.json());
-  console.log(res);
   return res
     .filter(
       (commit) =>
         commit.author_name === authorName &&
         !commit.title.includes("Merge") &&
-        getFormatedDate(new Date(commit.created_at)) == getCurrentDate()
+        getFormattedDate(new Date(commit.created_at)) === getCurrentDate()
     )
     .map((c) => ({ title: c.title }));
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (hasCacheed()) {
-    const { authorName, projectId, somethingSpecial } = getCacheed();
-    authorNameElem.value = authorName;
-    projectIdElem.value = projectId;
-    somethingSpecialElem.value = somethingSpecial;
-  }
-});
 
 const clearAndSetCache = () => {
-  const { authorName, projectId, somethingSpecial } = credentilInfos();
+  const { authorName, projectId, somethingSpecial } = initialCredential();
   const {
     authorName: oldAuthorName,
     projectId: oldProjectId,
     somethingSpecial: oldsomethingSpecial,
-  } = getCacheed();
-  if (
-    oldAuthorName != authorName ||
-    oldProjectId != projectId ||
-    oldsomethingSpecial != somethingSpecial
-  ) {
+  } = getCached();
+  if (oldAuthorName !== authorName || oldProjectId !== projectId || oldsomethingSpecial !== somethingSpecial) {
     clearCache();
     setCache();
   }
 };
 
-clearCacheElem.addEventListener("click", () => {
-  if (confirm("Are you sure to clear cache?")) {
-    clearCache();
-    renderCommits();
-    authorNameElem.value = "";
-    projectIdElem.value = "";
-    somethingSpecialElem.value = "";
-  }
-});
-
-const getFormatedDate = (date) => {
+const getFormattedDate = (date) => {
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const day = date.getDate().toString().padStart(2, "0");
   return date.getFullYear() + "-" + month + "-" + day;
 };
-const getCurrentDate = () => getFormatedDate(new Date());
 
-const setAccessText = (text) => (text += getRandom());
-
-const getAccessText = (text) => {
-  return text.split("___")[0];
-};
+const getCurrentDate = () => getFormattedDate(new Date());
 
 function getRandom(length = 10) {
-  var result = "";
-  var characters =
+  let result = "";
+  const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return "___" + result;
 }
+
+clearCacheElem.addEventListener("click", () => {
+  if (confirm("Are you sure to clear cache?")) {
+    clearCache();
+    __("ul").innerHTML = "";
+    initialCredential();
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  initialCredential();
+  if (hasCached()) {
+    const { authorName, projectId, somethingSpecial } = getCached();
+    setinitialCredential(authorName, projectId, somethingSpecial);
+  }
+});
+
+
+__("ul").addEventListener("click", () => {
+  const data = [];
+  _a("#commits").forEach(li => {
+    data.push(li.textContent);
+  })
+  console.log(data);
+})
