@@ -59,9 +59,9 @@ const renderCommits = (commits) => {
     __("ul").remove();
   }
   const ul = document.createElement("ul");
-  ul.setAttribute("id", "commits");
   commits.forEach((commit) => {
     const li = document.createElement("li");
+    li.setAttribute("id", "commit");
     li.textContent = commit.title;
     ul.appendChild(li);
   });
@@ -158,11 +158,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-
-__("ul").addEventListener("click", () => {
+document.body.addEventListener('click', (e) => {
   const data = [];
-  _a("#commits").forEach(li => {
-    data.push(li.textContent);
+  let x = 1;
+  const target = e.target;
+  if (target.id != "commit") return;
+  _a("li").forEach(li => {
+    if (x == 1) {
+      data.push(li.textContent);
+    } else {
+      data.push('+ ' + li.textContent);
+    }
+    x++;
   })
-  console.log(data);
-})
+  navigator.clipboard.writeText(data.join('\n'));
+  alert("Copied to clipboard!");
+});
+
