@@ -1,50 +1,48 @@
 const __ = document.querySelector.bind(document);
 const _a = document.querySelectorAll.bind(document);
-const authorNameElem = __("#authorName");
-const projectIdElem = __("#projectId");
-const somethingSpecialElem = __("#somethingSpecial");
 const loadCommitsElem = __("#loadCommits");
 const clearCacheElem = __("#clearCache");
+const CACHE_KEY = "bla";
 
 const initialCredential = () => {
   return {
-    authorName: authorNameElem.value.trim(),
-    projectId: projectIdElem.value.trim(),
-    somethingSpecial: somethingSpecialElem.value.trim(),
+    authorName: __("#authorName").value.trim(),
+    projectId: __("#projectId").value.trim(),
+    secretKey: __("#somethingSpecial").value.trim(),
   };
 };
 
-const setinitialCredential = (authorName, projectId, somethingSpecial) => {
+const seCredential = (authorName, projectId, secretKey) => {
   authorNameElem.value = authorName;
   projectIdElem.value = projectId;
-  somethingSpecialElem.value = somethingSpecial;
+  secretKeyElem.value = secretKey;
 }
 
 const validateinitialCredential = () => {
-  const { authorName, projectId, somethingSpecial } = initialCredential();
-  if (!authorName || !projectId || !somethingSpecial) {
+  const { authorName, projectId, secretKey } = initialCredential();
+  if (!authorName || !projectId || !secretKey) {
     throw new Error("Please enter all credential");
   }
 };
 
 const getCached = () => {
-  const cachedCredential = localStorage.getItem("bla");
-  let { authorName, projectId, somethingSpecial } = JSON.parse(cachedCredential);
-  somethingSpecial = getAccessText(somethingSpecial);
-  return { authorName, projectId, somethingSpecial };
+  const cachedCredential = localStorage.getItem(CACHE_KEY);
+  let { authorName, projectId, secretKey } = JSON.parse(cachedCredential);
+  secretKey = getAccessText(secretKey);
+  return { authorName, projectId, secretKey };
 };
 
-const hasCached = () => {
-  const cachedCredential = localStorage.getItem("bla");
-  if (cachedCredential) return true;
+const Cached = () => {
+  const credential = localStorage.getItem(CACHE_KEY);
+  if (credential) return true;
 };
 
 const setCache = () => {
-  let { authorName, projectId, somethingSpecial } = initialCredential();
-  somethingSpecial = setAccessText(somethingSpecial);
+  let { authorName, projectId, secretKey } = initialCredential();
+  secretKey = setAccessText(secretKey);
   localStorage.setItem(
-    "bla",
-    JSON.stringify({ authorName, projectId, somethingSpecial })
+    CACHE_KEY,
+    JSON.stringify({ authorName, projectId, secretKey })
   );
 };
 
@@ -52,7 +50,7 @@ const setAccessText = (text) => (text += getRandom());
 
 const getAccessText = (text) => text.split("___")[0];
 
-const clearCache = () => localStorage.removeItem("bla");
+const clearCache = () => localStorage.removeItem(CACHE_KEY);
 
 const renderCommits = (commits) => {
   if (__("ul") != null) {
@@ -70,15 +68,15 @@ const renderCommits = (commits) => {
 
 loadCommitsElem.addEventListener("click", async () => {
   try {
-    if (hasCached()) {
+    if (Cached()) {
       clearAndSetCache();
-      const { authorName, projectId, somethingSpecial } = getCached();
-      const commits = await getCommits(authorName, projectId, somethingSpecial);
+      const { authorName, projectId, secretKey } = getCached();
+      const commits = await getCommits(authorName, projectId, secretKey);
       renderCommits(commits);
     } else {
       validateinitialCredential();
-      const { authorName, projectId, somethingSpecial } = initialCredential();
-      const commits = await getCommits(authorName, projectId, somethingSpecial);
+      const { authorName, projectId, secretKey } = initialCredential();
+      const commits = await getCommits(authorName, projectId, secretKey);
       if (confirm("Are you sure to cache this credential?")) setCache();
       renderCommits(commits);
     }
@@ -87,15 +85,28 @@ loadCommitsElem.addEventListener("click", async () => {
   }
 });
 
-const getCommits = async (authorName, projectId, somethingSpecial) => {
-  if (!authorName || !projectId || !somethingSpecial)
+const getCommits = async (authorName, projectId, secretKey) => {
+  const commits = [];
+  if (!authorName || !projectId || !secretKey) {
     throw new Error("Please enter all credential");
-  const res = await fetch(
-    `https://gitlab.com/api/v4/projects/${projectId}/repository/commits?all=true`,
+  }
+  if (projectId.Includes(',')) {
+    const ids = projectId.split(',');
+    ids.forEach(x => {
+      commits.push(loadCommitsOf(authorName, x, secretKey));
+    });
+  } else {
+    commits.push(loadCommitsOf(authorName, projectId, secretKey))
+  }
+  return commits;
+}
+
+const loadCommitsOf = async (authorName, projectId, secretKey) => {
+  const res = await fetch(`https://gitlab.com/api/v4/projects/${projectId}/repository/commits?all=true`,
     {
       headers: {
         "Content-Type": "application/json",
-        "PRIVATE-TOKEN": somethingSpecial,
+        "PRIVATE-TOKEN": secretKey,
       },
     }
   ).then((res) => res.json());
@@ -111,13 +122,13 @@ const getCommits = async (authorName, projectId, somethingSpecial) => {
 
 
 const clearAndSetCache = () => {
-  const { authorName, projectId, somethingSpecial } = initialCredential();
+  const { authorName, projectId, secretKey } = initialCredential();
   const {
     authorName: oldAuthorName,
     projectId: oldProjectId,
-    somethingSpecial: oldsomethingSpecial,
+    secretKey: oldsecretKey,
   } = getCached();
-  if (oldAuthorName !== authorName || oldProjectId !== projectId || oldsomethingSpecial !== somethingSpecial) {
+  if (oldAuthorName !== authorName || oldProjectId !== projectId || oldsecretKey !== secretKey) {
     clearCache();
     setCache();
   }
@@ -152,9 +163,9 @@ clearCacheElem.addEventListener("click", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   initialCredential();
-  if (hasCached()) {
-    const { authorName, projectId, somethingSpecial } = getCached();
-    setinitialCredential(authorName, projectId, somethingSpecial);
+  if (Cached()) {
+    const { authorName, projectId, secretKey } = getCached();
+    seCredential(authorName, projectId, secretKey);
   }
 });
 
