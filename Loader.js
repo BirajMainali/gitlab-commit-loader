@@ -56,6 +56,7 @@ const renderCommits = (commits) => {
     if (__("ul") != null) {
         __("ul").remove();
     }
+    console.log(commits);
     const ul = document.createElement("ul");
     commits.forEach((commit) => {
         const li = document.createElement("li");
@@ -92,9 +93,10 @@ const getCommits = async (authorName, projectId, secretKey) => {
     }
     if (projectId.includes(",")) {
         const ids = projectId.split(",");
-        ids.forEach(async (x) => {
-            commits.push(...await loadCommitsOf(authorName, x, secretKey));
-        });
+        for(let id of ids) {
+            const x = await loadCommitsOf(authorName, id, secretKey);
+            commits.push(...x);
+        }
     } else {
         commits.push(...(await loadCommitsOf(authorName, projectId, secretKey)));
     }
