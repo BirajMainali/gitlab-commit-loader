@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
 
             const cache = (key, value, isAppend = true) => {
                 if (isAppend) {
-                    if (typeof value === undefined) return;
+                    if (typeof value === undefined || value.length < 0) return;
                     if (cached(key)) {
                         const items = getCached(key);
                         value.map(y => {
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
                 }
                 navigator.clipboard.writeText(data.join('\n'));
             }
-            
+
             const cacheCredential = () => {
                 const item = credential.value;
                 if (!item.authorName || !item.projectId || !item.secretKey) {
@@ -78,7 +78,9 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
                             "PRIVATE-TOKEN": credential.value.secretKey,
                         },
                     }).then(res => res.json())
-                    const y = res.filter((commit) => commit.author_name === credential.value.authorName && !commit.title.includes("Merge") && getFormattedDate(new Date(commit.created_at)) === getCurrentDate()).map((c) => ({title: c.title}));
+                    const y = res.filter((commit) => commit.author_name === credential.value.authorName
+                        && !commit.title.includes("Merge")
+                        && getFormattedDate(new Date(commit.created_at)) === getCurrentDate()).map((c) => ({title: c.title}));
                     y.forEach(x => {
                         items.push(x);
                     })
@@ -87,15 +89,18 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
             }
 
             const storeCommit = async () => {
-                const recentCommits = [];
                 let addedCommits = await getCommits();
                 if (cached(CREDENTIAL_CACHE_KEY)) {
                     if (cached(COMMIT_CACHE_KEY)) {
                         const histories = getCached(COMMIT_CACHE_KEY);
                         for (const x of histories) {
-                            addedCommits = addedCommits.filter(c => c.title !== x.title);
+                            for (const y of addedCommits) {
+                                if (x.title === y.title) {
+                                    addedCommits = addedCommits.filter(c => c.title !== y.title);
+                                }
+                            }
                         }
-                        cache(COMMIT_CACHE_KEY, recentCommits);
+                        cache(COMMIT_CACHE_KEY, addedCommits);
                     } else {
                         cache(COMMIT_CACHE_KEY, addedCommits);
                     }
@@ -105,10 +110,10 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
             }
 
             const updateHistory = async () => {
+                storeCommit();
                 setTimeout(() => {
-                    storeCommit();
+                    commits.value = getCached(COMMIT_CACHE_KEY);
                 });
-                commits.value = getCached(COMMIT_CACHE_KEY);
             }
 
             Vue.onMounted(() => {
