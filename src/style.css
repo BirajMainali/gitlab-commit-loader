@@ -1,0 +1,28 @@
+@import url("https://fonts.googleapis.com/css2?family=Hubballi&display=swap");
+
+body {
+    font-family: "Hubballi", serif;
+    font-size: large;
+}
+
+ul {
+    border-style: dotted;
+    border-width: 1px;
+}
+
+input, button {
+    font-family: "Hubballi",serif;
+    font-size: large;
+    height: 30px;
+    width: 300px;
+    margin-right: 5px;
+    border-style: dotted;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
+ul:hover {
+    cursor: pointer;
+}

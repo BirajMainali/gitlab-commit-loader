@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Commit Loader</title>
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <script src="https://unpkg.com/vue@3"></script>
+    <script src="loader.js" defer></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+    <input
+            ref="authorNameElem"
+            type="text"
+            v-model="credential.authorName"
+            placeholder="authorName"/>
+    <input
+            type="text"
+            v-model="credential.projectId"
+            placeholder="1111,22222,333333"/>
+    <input
+            type="text"
+            v-model="credential.secretKey"
+            placeholder="accessToken [read api]"
+    />
+    <button @click="cacheCredential()">Cache</button>
+    <button @click="updateHistory()">Update History</button>
+
+    <ul @click="copyToClipboard">
+        <li v-for="commit in commits">{{commit.title}}</li>
+    </ul>
+</div>
+</body>
+</html>
