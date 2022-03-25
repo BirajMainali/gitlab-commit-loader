@@ -4,19 +4,38 @@ body {
     font-family: "Hubballi", serif;
     font-size: large;
 }
-
+.container {
+    width: 80%;
+margin: auto;
+}
 ul {
     border-style: dotted;
     border-width: 1px;
 }
 
-input, button {
+input{
     font-family: "Hubballi",serif;
     font-size: large;
     height: 30px;
     width: 300px;
     margin-right: 5px;
     border-style: dotted;
+}
+
+button{
+    font-family: "Hubballi",serif;
+    font-size: large;
+    height: 30px;
+    width: 100px;
+    margin-right: 5px;
+    border-style: dotted;
+}
+.commit-group-date {
+    margin-bottom: 0px;
+}
+
+.commit-list {
+    margin-top: 0px;
 }
 
 button:hover {

@@ -1,35 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Commit Loader</title>
     <link rel="icon" type="image/png" href="./favicon.png" />
-    <script src="https://unpkg.com/vue@3"></script>
-    <script src="loader.js" defer></script>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div id="app">
-    <input
-            ref="authorNameElem"
-            type="text"
-            v-model="credential.authorName"
-            placeholder="authorName"/>
-    <input
-            type="text"
-            v-model="credential.projectId"
-            placeholder="1111,22222,333333"/>
-    <input
-            type="text"
-            v-model="credential.secretKey"
-            placeholder="accessToken [read api]"
-    />
-    <button @click="cacheCredential()">Cache</button>
-    <button @click="updateHistory()">Update History</button>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app" class="container">
+      <input
+        ref="authorNameElem"
+        type="text"
+        v-model="credential.authorName"
+        placeholder="authorName"
+      />
+      <input
+        type="text"
+        v-model="credential.projectId"
+        placeholder="1111,22222,333333"
+      />
+      <input
+        type="password"
+        v-model="credential.secretKey"
+        placeholder="accessToken [read api]"
+      />
+      <button @click="cacheCredential()">Cache</button>
+      <button @click="updateHistory()">Load</button>
+      <button @click="clearCache()">Clear Cache</button>
 
-    <ul @click="copyToClipboard">
-        <li v-for="commit in commits">{{commit.title}}</li>
-    </ul>
-</div>
-</body>
+      <template v-for="datedCommits in commits">
+        <h4 class="commit-group-date">{{datedCommits.date}}</h4>
+        <ul class="commit-list" @click="copyToClipboard">
+          <li v-for="commit in datedCommits.commits">{{commit.title}}</li>
+        </ul>
+      </template>
+      <script src="https://unpkg.com/vue@3" defer></script>
+      <script src="loader.js" defer></script>
+    </div>
+  </body>
 </html>

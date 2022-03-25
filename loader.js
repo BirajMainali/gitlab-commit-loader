@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', (key, value) => {
+document.addEventListener('DOMContentLoaded', () => {
     const CREDENTIAL_CACHE_KEY = "LOADER_CACHE"
     const COMMIT_CACHE_KEY = "LOADED_HISTORY_CACHE"
     const app = Vue.createApp({
@@ -29,8 +29,23 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
                         value = items;
                     }
                 }
-                localStorage.removeItem(key);
                 localStorage.setItem(key, JSON.stringify(value));
+            }
+
+            const clearCache = () => {
+                if (confirm("Are you sure you want to clear commit history")) {
+                    localStorage.removeItem(COMMIT_CACHE_KEY);
+                    commits.value = null;
+                }
+                if (confirm("Are you sure you want to clear credential")) {
+                    localStorage.removeItem(CREDENTIAL_CACHE_KEY);
+                    credential.value = {
+                        projectId: null,
+                        authorName: null,
+                        secretKey: null,
+                    }
+                }
+
             }
 
             const getFormattedDate = (date) => {
@@ -80,10 +95,10 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
                     }).then(res => res.json())
                     const y = res.filter((commit) => commit.author_name === credential.value.authorName
                         && !commit.title.includes("Merge")
-                        && getFormattedDate(new Date(commit.created_at)) === getCurrentDate()).map((c) => ({title: c.title}));
+                        && getFormattedDate(new Date(commit.created_at)) === getCurrentDate()).map((c) => ({ title: c.title, created_at: c.created_at }));
                     y.forEach(x => {
                         items.push(x);
-                    })
+                    });
                 }
                 return items;
             }
@@ -110,10 +125,30 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
             }
 
             const updateHistory = async () => {
-                storeCommit();
-                setTimeout(() => {
-                    commits.value = getCached(COMMIT_CACHE_KEY);
+                await storeCommit();
+                commits.value = getDayWiseCommitList(getCached(COMMIT_CACHE_KEY));
+            }
+
+            const getDayWiseCommitList = (commits) => {
+                const dayWiseCommitList = [];
+                commits.forEach(commit => {
+                    const date = new Date(commit.created_at);
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1;
+                    const year = date.getFullYear();
+                    const key = `${year}-${month}-${day}`;
+                    const item = dayWiseCommitList.find(x => x.date === key);
+                    if (item) {
+                        item.commits.push(commit);
+                    }
+                    else {
+                        dayWiseCommitList.push({
+                            date: key,
+                            commits: [commit]
+                        });
+                    }
                 });
+                return dayWiseCommitList.sort((a, b) => a.date < b.date ? 1 : -1);
             }
 
             Vue.onMounted(() => {
@@ -122,7 +157,7 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
                     credential.value = getCached(CREDENTIAL_CACHE_KEY);
                     setInterval(async () => {
                         await updateHistory();
-                    }, 60000);
+                    }, 600000);
                 }
             })
 
@@ -131,17 +166,10 @@ document.addEventListener('DOMContentLoaded', (key, value) => {
                 commits,
                 authorNameElem,
                 updateHistory,
-                storeCommit,
-                getCached,
-                cache,
-                cached,
-                getCommits,
                 cacheCredential,
-                getCurrentDate,
-                getFormattedDate,
+                clearCache,
                 copyToClipboard
             }
         }
     }).mount("#app");
 })
-;
